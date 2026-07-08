@@ -371,7 +371,7 @@ class ReplyItemGrpc extends StatelessWidget {
                     ),
                   )
                   .toList(),
-              allPicArr: _resolvedAllPicArr,
+              allPicArrGetter: _resolvedAllPicArr,
               onViewImage: onViewImage,
             ),
           ),

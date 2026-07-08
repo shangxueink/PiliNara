@@ -66,17 +66,22 @@ class ImageGridView extends StatelessWidget {
     super.key,
     required this.picArr,
     this.allPicArr,
+    this.allPicArrGetter,
     this.onViewImage,
     this.fullScreen = false,
   });
 
   final List<ImageModel> picArr;
   final List<ImageModel>? allPicArr;
+  final List<ImageModel>? Function()? allPicArrGetter;
   final VoidCallback? onViewImage;
   final bool fullScreen;
 
   static bool horizontalPreview = Pref.horizontalPreview;
   static final _regex = RegExp(r'/videoV|/dynamicDetail$|/articlePage');
+
+  List<ImageModel> get _allPicArr =>
+      allPicArr ?? allPicArrGetter?.call() ?? picArr;
 
   List<SourceModel> _toSources(List<ImageModel> list) {
     return list
@@ -95,7 +100,7 @@ class ImageGridView extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     final imgList = _toSources(picArr);
-    final allImgList = _toSources(allPicArr ?? picArr);
+    final allImgList = _toSources(_allPicArr);
     if (horizontalPreview &&
         !fullScreen &&
         Get.currentRoute.startsWith(_regex) &&
@@ -152,7 +157,8 @@ class ImageGridView extends StatelessWidget {
     HapticFeedback.mediumImpact();
     final item = picArr[index];
     final imgList = _toSources(picArr);
-    final allImgList = _toSources(allPicArr ?? picArr);
+    final allImgList = _toSources(_allPicArr);
+    final hasAllPicArr = allPicArr != null || allPicArrGetter != null;
     showMenu(
       context: context,
       position: PageUtils.menuPosition(offset),
@@ -173,7 +179,7 @@ class ImageGridView extends StatelessWidget {
           onTap: () => ImageUtils.downloadImg([item.url]),
           child: const Text('保存图片', style: TextStyle(fontSize: 14)),
         ),
-        if (allPicArr != null)
+        if (hasAllPicArr)
           PopupMenuItem(
             height: 42,
             onTap: () => PageUtils.imageView(
@@ -190,7 +196,7 @@ class ImageGridView extends StatelessWidget {
             onTap: () => PageUtils.launchURL(item.url),
             child: const Text('网页打开', style: TextStyle(fontSize: 14)),
           )
-        else if (allPicArr != null)
+        else if (hasAllPicArr)
           PopupMenuItem(
             height: 42,
             onTap: () => ImageUtils.downloadImg(
