@@ -26,6 +26,7 @@ import 'package:PiliPlus/pages/member/widget/medal_widget.dart';
 import 'package:PiliPlus/pages/save_panel/view.dart';
 import 'package:PiliPlus/pages/audio/controller.dart';
 import 'package:PiliPlus/pages/video/controller.dart';
+import 'package:PiliPlus/pages/video/reply/controller.dart';
 import 'package:PiliPlus/pages/video/reply/widgets/zan_grpc.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
@@ -68,6 +69,7 @@ class ReplyItemGrpc extends StatelessWidget {
     this.showDialogue,
     this.getTag,
     this.onViewImage,
+    this.allPicArr,
     this.onCheckReply,
     this.onToggleTop,
     this.jumpToDialogue,
@@ -82,9 +84,22 @@ class ReplyItemGrpc extends StatelessWidget {
   final VoidCallback? showDialogue;
   final Function? getTag;
   final VoidCallback? onViewImage;
+  final List<ImageModel>? allPicArr;
   final ValueChanged<ReplyInfo>? onCheckReply;
   final ValueChanged<ReplyInfo>? onToggleTop;
   final VoidCallback? jumpToDialogue;
+
+  List<ImageModel>? get _resolvedAllPicArr {
+    if (allPicArr != null) {
+      return allPicArr;
+    }
+    try {
+      final tag = getTag?.call() ?? Get.arguments['heroTag'];
+      return Get.find<VideoReplyController>(tag: tag).allImageModels;
+    } catch (_) {
+      return null;
+    }
+  }
 
   static final _voteRegExp = RegExp(r"^\{vote:\d+?\}$");
   static final _timeRegExp = RegExp(r'^(?:\d+[:：])?\d+[:：]\d+$');
@@ -356,6 +371,7 @@ class ReplyItemGrpc extends StatelessWidget {
                     ),
                   )
                   .toList(),
+              allPicArr: _resolvedAllPicArr,
               onViewImage: onViewImage,
             ),
           ),

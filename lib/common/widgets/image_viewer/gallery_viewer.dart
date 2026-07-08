@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of PiliPlus
  *
  * PiliPlus is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ import 'dart:io' show File, Platform;
 import 'package:PiliPlus/common/widgets/colored_box_transition.dart';
 import 'package:PiliPlus/common/widgets/flutter/page/page_view.dart';
 import 'package:PiliPlus/common/widgets/gesture/image_horizontal_drag_gesture_recognizer.dart';
+import 'package:PiliPlus/common/widgets/image_viewer/gallery_overview_view.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/image.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/loading_indicator.dart';
 import 'package:PiliPlus/common/widgets/image_viewer/viewer.dart';
@@ -56,6 +57,7 @@ class GalleryViewer extends StatefulWidget {
     this.maxScale = 8.0,
     required this.quality,
     required this.sources,
+    this.allSources,
     this.initIndex = 0,
     this.onPageChanged,
     this.tag = '',
@@ -65,6 +67,7 @@ class GalleryViewer extends StatefulWidget {
   final double maxScale;
   final int quality;
   final List<SourceModel> sources;
+  final List<SourceModel>? allSources;
   final int initIndex;
   final ValueChanged<int>? onPageChanged;
   final String tag;
@@ -80,30 +83,22 @@ class _GalleryViewerState extends State<GalleryViewer>
   late final RxInt _currIndex;
   GlobalKey? _key;
   EdgeInsets? _padding;
-
   late bool _hasInit = false;
   Player? _player;
   VideoController? _videoController;
-
   late final PageController _pageController;
-
   late final TapGestureRecognizer _tapGestureRecognizer;
   late final DoubleTapGestureRecognizer _doubleTapGestureRecognizer;
-  late final ImageHorizontalDragGestureRecognizer
-  _horizontalDragGestureRecognizer;
+  late final ImageHorizontalDragGestureRecognizer _horizontalDragGestureRecognizer;
   late final LongPressGestureRecognizer _longPressGestureRecognizer;
-
   late final AnimationController _animateController;
   late final Animation<Color?> _opacityAnimation;
   double dx = 0, dy = 0;
-
   Offset _offset = Offset.zero;
   bool _dragging = false;
 
   String _getActualUrl(String url) {
-    return _quality != 100
-        ? ImageUtils.thumbnailUrl(url, _quality)
-        : url.http2https;
+    return _quality != 100 ? ImageUtils.thumbnailUrl(url, _quality) : url.http2https;
   }
 
   Future<void> _initPlayer() async {
@@ -130,17 +125,13 @@ class _GalleryViewerState extends State<GalleryViewer>
     _currIndex = widget.initIndex.obs;
     final item = widget.sources[widget.initIndex];
     _playIfNeeded(item);
-
     if (!item.isLongPic) {
       _key = GlobalKey();
       WidgetsBinding.instance.addPostFrameCallback((_) => _key = null);
     }
-
     _pageController = PageController(initialPage: widget.initIndex);
-
     final gestureSettings = MediaQuery.maybeGestureSettingsOf(Get.context!);
     _tapGestureRecognizer = TapGestureRecognizer()
-      // ..onTap = _onTap
       ..gestureSettings = gestureSettings;
     if (PlatformUtils.isDesktop) {
       _tapGestureRecognizer.onSecondaryTapUp = _showDesktopMenu;
@@ -152,25 +143,17 @@ class _GalleryViewerState extends State<GalleryViewer>
     _longPressGestureRecognizer = LongPressGestureRecognizer()
       ..onLongPress = _onLongPress
       ..gestureSettings = gestureSettings;
-
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         _tapGestureRecognizer.onTap = _onTap;
       }
     });
-
     _animateController = AnimationController(
-      duration: const Duration(
-        milliseconds: 750,
-      ), // reverse only if value <= 0.2
+      duration: const Duration(milliseconds: 750),
       vsync: this,
     );
-
     _opacityAnimation = _animateController.drive(
-      ColorTween(
-        begin: Colors.black,
-        end: Colors.transparent,
-      ),
+      ColorTween(begin: Colors.black, end: Colors.transparent),
     );
   }
 
@@ -204,9 +187,7 @@ class _GalleryViewerState extends State<GalleryViewer>
       if (_hideSystemBar) {
         tmpPadding = padding;
         hideSystemBar()!.whenComplete(
-          () => WidgetsBinding.instance.addPostFrameCallback(
-            (_) => tmpPadding = null,
-          ),
+          () => WidgetsBinding.instance.addPostFrameCallback((_) => tmpPadding = null),
         );
       }
     }
@@ -214,19 +195,13 @@ class _GalleryViewerState extends State<GalleryViewer>
 
   Matrix4 _onTransform(double val) {
     final scale = val.lerp(1.0, 0.25);
-
-    // Matrix4.identity()
-    //   ..translateByDouble(size.width / 2, size.height / 2, 0, 1)
-    //   ..translateByDouble(size.width * val * dx, size.height * val * dy, 0, 1)
-    //   ..scaleByDouble(scale, scale, scale, 1)
-    //   ..translateByDouble(-size.width / 2, -size.height / 2, 0, 1);
-
     final tmp = (1.0 - scale) / 2.0;
-    return Matrix4.diagonal3Values(scale, scale, scale)..setTranslationRaw(
-      _containerSize.width * (val * dx + tmp),
-      _containerSize.height * (val * dy + tmp),
-      0,
-    );
+    return Matrix4.diagonal3Values(scale, scale, scale)
+      ..setTranslationRaw(
+        _containerSize.width * (val * dx + tmp),
+        _containerSize.height * (val * dy + tmp),
+        0,
+      );
   }
 
   void _updateMoveAnimation() {
@@ -240,7 +215,6 @@ class _GalleryViewerState extends State<GalleryViewer>
 
   void _onDragStart(ScaleStartDetails details) {
     _dragging = true;
-
     if (_animateController.isAnimating) {
       _animateController.stop();
     } else {
@@ -251,25 +225,17 @@ class _GalleryViewerState extends State<GalleryViewer>
   }
 
   void _onDragUpdate(ScaleUpdateDetails details) {
-    if (!_dragging || _animateController.isAnimating) {
-      return;
-    }
-
+    if (!_dragging || _animateController.isAnimating) return;
     _offset += details.focalPointDelta;
     _updateMoveAnimation();
-
     if (!_animateController.isAnimating) {
       _animateController.value = _offset.dy.abs() / _containerSize.height;
     }
   }
 
   void _onDragEnd(ScaleEndDetails details) {
-    if (!_dragging || _animateController.isAnimating) {
-      return;
-    }
-
+    if (!_dragging || _animateController.isAnimating) return;
     _dragging = false;
-
     if (!_animateController.isDismissed) {
       if (_animateController.value > 0.2) {
         Get.back();
@@ -301,9 +267,7 @@ class _GalleryViewerState extends State<GalleryViewer>
     }
     Future.delayed(const Duration(milliseconds: 200), _currIndex.close);
     super.dispose();
-    if (_hideSystemBar) {
-      showSystemBar();
-    }
+    if (_hideSystemBar) showSystemBar();
   }
 
   void _onPointerDown(PointerDownEvent event) {
@@ -315,19 +279,19 @@ class _GalleryViewerState extends State<GalleryViewer>
   @override
   Widget build(BuildContext context) {
     return Listener(
-      behavior: .opaque,
+      behavior: HitTestBehavior.opaque,
       onPointerDown: _onPointerDown,
       child: Stack(
-        fit: .expand,
-        alignment: .center,
-        clipBehavior: .none,
+        fit: StackFit.expand,
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           ColoredBoxTransition(color: _opacityAnimation),
           LayoutBuilder(
             builder: (context, constraints) {
               _containerSize = constraints.biggest;
               return MatrixTransition(
-                alignment: .topLeft,
+                alignment: Alignment.topLeft,
                 animation: _animateController,
                 onTransform: _onTransform,
                 child: PageView<ImageHorizontalDragGestureRecognizer>.builder(
@@ -338,8 +302,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   ),
                   itemCount: widget.sources.length,
                   itemBuilder: _itemBuilder,
-                  horizontalDragGestureRecognizer: () =>
-                      _horizontalDragGestureRecognizer,
+                  horizontalDragGestureRecognizer: () => _horizontalDragGestureRecognizer,
                 ),
               );
             },
@@ -361,16 +324,13 @@ class _GalleryViewerState extends State<GalleryViewer>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.3),
-            ],
+            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.3)],
           ),
         ),
         alignment: Alignment.center,
         child: Obx(
           () => Text(
-            "${_currIndex.value + 1}/${widget.sources.length}",
+            '${_currIndex.value + 1}/${widget.sources.length}',
             style: const TextStyle(color: Colors.white),
           ),
         ),
@@ -400,10 +360,7 @@ class _GalleryViewerState extends State<GalleryViewer>
       ? null
       : (int offset) {
           final currPage = _pageController.page?.round() ?? 0;
-          final nextPage = (currPage + offset).clamp(
-            0,
-            widget.sources.length - 1,
-          );
+          final nextPage = (currPage + offset).clamp(0, widget.sources.length - 1);
           if (nextPage != currPage) {
             _pageController.animateToPage(
               nextPage,
@@ -444,42 +401,29 @@ class _GalleryViewerState extends State<GalleryViewer>
           horizontalDragGestureRecognizer: _horizontalDragGestureRecognizer,
           onChangePage: _onChangePage,
           frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (wasSynchronouslyLoaded) {
-              return child;
-            }
+            if (wasSynchronouslyLoaded) return child;
             if (frame == null) {
               if (widget.quality == _quality) {
                 return child;
-              } else {
-                return Image(
-                  image: ResizeImage.resizeIfNeeded(
-                    _containerSize.width.cacheSize(context),
-                    null,
-                    CachedNetworkImageProvider(
-                      ImageUtils.thumbnailUrl(item.url, widget.quality),
-                    ),
-                  ),
-                  minScale: widget.minScale,
-                  maxScale: widget.maxScale,
-                  containerSize: _containerSize,
-                  onDragStart: null,
-                  onDragUpdate: null,
-                  onDragEnd: null,
-                  doubleTapGestureRecognizer: _doubleTapGestureRecognizer,
-                  horizontalDragGestureRecognizer:
-                      _horizontalDragGestureRecognizer,
-                  onChangePage: _onChangePage,
-                );
-                // final isLongPic = item.isLongPic;
-                // return CachedNetworkImage(
-                //   fadeInDuration: Duration.zero,
-                //   fadeOutDuration: Duration.zero,
-                //   // fit: isLongPic ? .fitWidth : null,
-                //   // alignment: isLongPic ? .topCenter : .center,
-                //   imageUrl: ImageUtils.thumbnailUrl(item.url, widget.quality),
-                //   placeholder: (_, _) => const SizedBox.expand(),
-                // );
               }
+              return Image(
+                image: ResizeImage.resizeIfNeeded(
+                  _containerSize.width.cacheSize(context),
+                  null,
+                  CachedNetworkImageProvider(
+                    ImageUtils.thumbnailUrl(item.url, widget.quality),
+                  ),
+                ),
+                minScale: widget.minScale,
+                maxScale: widget.maxScale,
+                containerSize: _containerSize,
+                onDragStart: null,
+                onDragUpdate: null,
+                onDragEnd: null,
+                doubleTapGestureRecognizer: _doubleTapGestureRecognizer,
+                horizontalDragGestureRecognizer: _horizontalDragGestureRecognizer,
+                onChangePage: _onChangePage,
+              );
             }
             return child;
           },
@@ -488,9 +432,7 @@ class _GalleryViewerState extends State<GalleryViewer>
           onDragUpdate: _onDragUpdate,
           onDragEnd: _onDragEnd,
         );
-        if (isLongPic) {
-          return child;
-        }
+        if (isLongPic) return child;
       case SourceType.livePhoto:
         child = Obx(
           key: _key,
@@ -504,8 +446,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   onDragUpdate: _onDragUpdate,
                   onDragEnd: _onDragEnd,
                   doubleTapGestureRecognizer: _doubleTapGestureRecognizer,
-                  horizontalDragGestureRecognizer:
-                      _horizontalDragGestureRecognizer,
+                  horizontalDragGestureRecognizer: _horizontalDragGestureRecognizer,
                   onChangePage: _onChangePage,
                   child: FittedBox(
                     child: SimpleVideo(
@@ -521,10 +462,34 @@ class _GalleryViewerState extends State<GalleryViewer>
   }
 
   void _onTap() {
-    EasyThrottle.throttle(
-      'VIEWER_TAP',
-      const Duration(milliseconds: 555),
-      Get.back,
+    EasyThrottle.throttle('VIEWER_TAP', const Duration(milliseconds: 555), Get.back);
+  }
+
+  bool get _canViewAllMedia =>
+      widget.allSources != null && !widget.tag.endsWith('#all');
+
+  int _matchAllSourceIndex(SourceModel item) {
+    final allSources = widget.allSources;
+    if (allSources == null || allSources.isEmpty) {
+      return _currIndex.value.clamp(0, widget.sources.length - 1);
+    }
+    final matchIndex = allSources.indexWhere(
+      (source) => source.url == item.url && source.liveUrl == item.liveUrl,
+    );
+    if (matchIndex != -1) return matchIndex;
+    return _currIndex.value.clamp(0, allSources.length - 1);
+  }
+
+  void _viewAllMedia() {
+    final allSources = widget.allSources;
+    if (!_canViewAllMedia || allSources == null || allSources.isEmpty) return;
+    final item = widget.sources[_currIndex.value];
+    Get.to(
+      () => GalleryOverviewView(
+        sources: allSources,
+        initIndex: _matchAllSourceIndex(item),
+        tag: '${widget.tag}#all',
+      ),
     );
   }
 
@@ -532,6 +497,7 @@ class _GalleryViewerState extends State<GalleryViewer>
     final item = widget.sources[_currIndex.value];
     if (item.sourceType == .fileImage) return;
     HapticFeedback.mediumImpact();
+    final canViewAllMedia = _canViewAllMedia;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -547,7 +513,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   ImageUtils.onShareImg(item.url);
                 },
                 dense: true,
-                title: const Text('分享', style: TextStyle(fontSize: 14)),
+                title: const Text('鍒嗕韩', style: TextStyle(fontSize: 14)),
               ),
             ListTile(
               onTap: () {
@@ -555,15 +521,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 Utils.copyText(item.url);
               },
               dense: true,
-              title: const Text('复制链接', style: TextStyle(fontSize: 14)),
-            ),
-            ListTile(
-              onTap: () {
-                Get.back();
-                ImageUtils.copyImg(item.url);
-              },
-              dense: true,
-              title: const Text('复制图片', style: TextStyle(fontSize: 14)),
+              title: const Text('澶嶅埗閾炬帴', style: TextStyle(fontSize: 14)),
             ),
             ListTile(
               onTap: () {
@@ -571,8 +529,17 @@ class _GalleryViewerState extends State<GalleryViewer>
                 ImageUtils.downloadImg([item.url]);
               },
               dense: true,
-              title: const Text('保存图片', style: TextStyle(fontSize: 14)),
+              title: const Text('淇濆瓨鍥剧墖', style: TextStyle(fontSize: 14)),
             ),
+            if (canViewAllMedia)
+              ListTile(
+                onTap: () {
+                  Get.back();
+                  _viewAllMedia();
+                },
+                dense: true,
+                title: const Text('鏌ョ湅鎵€鏈夊浘鐗?, style: TextStyle(fontSize: 14)),
+              ),
             if (PlatformUtils.isDesktop)
               ListTile(
                 onTap: () {
@@ -580,18 +547,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   PageUtils.launchURL(item.url);
                 },
                 dense: true,
-                title: const Text('网页打开', style: TextStyle(fontSize: 14)),
-              )
-            else if (widget.sources.length > 1)
-              ListTile(
-                onTap: () {
-                  Get.back();
-                  ImageUtils.downloadImg(
-                    widget.sources.map((item) => item.url).toList(),
-                  );
-                },
-                dense: true,
-                title: const Text('保存全部图片', style: TextStyle(fontSize: 14)),
+                title: const Text('缃戦〉鎵撳紑', style: TextStyle(fontSize: 14)),
               ),
             if (item.sourceType == SourceType.livePhoto)
               ListTile(
@@ -606,7 +562,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 },
                 dense: true,
                 title: Text(
-                  '保存${Platform.isIOS ? ' Live Photo' : '视频'}',
+                  '淇濆瓨${Platform.isIOS ? ' Live Photo' : '瑙嗛'}',
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
@@ -619,6 +575,7 @@ class _GalleryViewerState extends State<GalleryViewer>
   void _showDesktopMenu(TapUpDetails details) {
     final item = widget.sources[_currIndex.value];
     if (item.sourceType == .fileImage) return;
+    final canViewAllMedia = _canViewAllMedia;
     showMenu(
       context: context,
       position: PageUtils.menuPosition(details.globalPosition),
@@ -626,22 +583,23 @@ class _GalleryViewerState extends State<GalleryViewer>
         PopupMenuItem(
           height: 42,
           onTap: () => Utils.copyText(item.url),
-          child: const Text('复制链接', style: TextStyle(fontSize: 14)),
-        ),
-        PopupMenuItem(
-          height: 42,
-          onTap: () => ImageUtils.copyImg(item.url),
-          child: const Text('复制图片', style: TextStyle(fontSize: 14)),
+          child: const Text('澶嶅埗閾炬帴', style: TextStyle(fontSize: 14)),
         ),
         PopupMenuItem(
           height: 42,
           onTap: () => ImageUtils.downloadImg([item.url]),
-          child: const Text('保存图片', style: TextStyle(fontSize: 14)),
+          child: const Text('淇濆瓨鍥剧墖', style: TextStyle(fontSize: 14)),
         ),
+        if (canViewAllMedia)
+          PopupMenuItem(
+            height: 42,
+            onTap: _viewAllMedia,
+            child: const Text('鏌ョ湅鎵€鏈夊浘鐗?, style: TextStyle(fontSize: 14)),
+          ),
         PopupMenuItem(
           height: 42,
           onTap: () => PageUtils.launchURL(item.url),
-          child: const Text('网页打开', style: TextStyle(fontSize: 14)),
+          child: const Text('缃戦〉鎵撳紑', style: TextStyle(fontSize: 14)),
         ),
         if (item.sourceType == SourceType.livePhoto)
           PopupMenuItem(
@@ -652,7 +610,7 @@ class _GalleryViewerState extends State<GalleryViewer>
               width: item.width!,
               height: item.height!,
             ),
-            child: const Text('保存视频', style: TextStyle(fontSize: 14)),
+            child: const Text('淇濆瓨瑙嗛', style: TextStyle(fontSize: 14)),
           ),
       ],
     );
@@ -664,9 +622,9 @@ class _GalleryViewerState extends State<GalleryViewer>
     ImageChunkEvent? loadingProgress,
   ) {
     return Stack(
-      fit: .expand,
-      alignment: .center,
-      clipBehavior: .none,
+      fit: StackFit.expand,
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
       children: [
         child,
         if (loadingProgress != null &&
@@ -685,3 +643,4 @@ class _GalleryViewerState extends State<GalleryViewer>
     );
   }
 }
+

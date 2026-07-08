@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of PiliPlus
  *
  * PiliPlus is free software: you can redistribute it and/or modify
@@ -30,10 +30,10 @@ import 'package:PiliPlus/utils/image_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 
 class ImageModel {
   ImageModel({
@@ -65,31 +65,37 @@ class ImageGridView extends StatelessWidget {
   const ImageGridView({
     super.key,
     required this.picArr,
+    this.allPicArr,
     this.onViewImage,
     this.fullScreen = false,
   });
 
   final List<ImageModel> picArr;
+  final List<ImageModel>? allPicArr;
   final VoidCallback? onViewImage;
   final bool fullScreen;
 
   static bool horizontalPreview = Pref.horizontalPreview;
   static final _regex = RegExp(r'/videoV|/dynamicDetail$|/articlePage');
 
+  List<SourceModel> _toSources(List<ImageModel> list) {
+    return list
+        .map(
+          (item) => SourceModel(
+            sourceType: item.isLivePhoto ? .livePhoto : .networkImage,
+            url: item.url,
+            liveUrl: item.isLivePhoto ? item.liveUrl : null,
+            width: item.isLivePhoto ? item.width.toInt() : null,
+            height: item.isLivePhoto ? item.height.toInt() : null,
+            isLongPic: item.isLongPic,
+          ),
+        )
+        .toList();
+  }
+
   void _onTap(BuildContext context, int index) {
-    final imgList = picArr.map(
-      (item) {
-        bool isLive = item.isLivePhoto;
-        return SourceModel(
-          sourceType: isLive ? .livePhoto : .networkImage,
-          url: item.url,
-          liveUrl: isLive ? item.liveUrl : null,
-          width: isLive ? item.width.toInt() : null,
-          height: isLive ? item.height.toInt() : null,
-          isLongPic: item.isLongPic,
-        );
-      },
-    ).toList();
+    final imgList = _toSources(picArr);
+    final allImgList = _toSources(allPicArr ?? picArr);
     if (horizontalPreview &&
         !fullScreen &&
         Get.currentRoute.startsWith(_regex) &&
@@ -101,6 +107,8 @@ class ImageGridView extends StatelessWidget {
           scaffoldState,
           imgList,
           index,
+          allSources: allImgList,
+          tag: hashCode.toString(),
         );
         return;
       }
@@ -108,6 +116,7 @@ class ImageGridView extends StatelessWidget {
     PageUtils.imageView(
       initialPage: index,
       imgList: imgList,
+      allSources: allImgList,
       tag: hashCode.toString(),
     );
   }
@@ -142,6 +151,8 @@ class ImageGridView extends StatelessWidget {
   void _showMenu(BuildContext context, int index, Offset offset) {
     HapticFeedback.mediumImpact();
     final item = picArr[index];
+    final imgList = _toSources(picArr);
+    final allImgList = _toSources(allPicArr ?? picArr);
     showMenu(
       context: context,
       position: PageUtils.menuPosition(offset),
@@ -154,25 +165,37 @@ class ImageGridView extends StatelessWidget {
           ),
         PopupMenuItem(
           height: 42,
-          onTap: () => ImageUtils.copyImg(item.url),
-          child: const Text('复制图片', style: TextStyle(fontSize: 14)),
+          onTap: () => Utils.copyText(item.url),
+          child: const Text('复制链接', style: TextStyle(fontSize: 14)),
         ),
         PopupMenuItem(
           height: 42,
           onTap: () => ImageUtils.downloadImg([item.url]),
           child: const Text('保存图片', style: TextStyle(fontSize: 14)),
         ),
+        if (allPicArr != null)
+          PopupMenuItem(
+            height: 42,
+            onTap: () => PageUtils.imageView(
+              initialPage: index,
+              imgList: imgList,
+              allSources: allImgList,
+              tag: hashCode.toString(),
+            ),
+            child: const Text('查看所有图片', style: TextStyle(fontSize: 14)),
+          ),
         if (PlatformUtils.isDesktop)
           PopupMenuItem(
             height: 42,
             onTap: () => PageUtils.launchURL(item.url),
             child: const Text('网页打开', style: TextStyle(fontSize: 14)),
           )
-        else if (picArr.length > 1)
+        else if (allPicArr != null)
           PopupMenuItem(
             height: 42,
-            onTap: () =>
-                ImageUtils.downloadImg(picArr.map((item) => item.url).toList()),
+            onTap: () => ImageUtils.downloadImg(
+              allImgList.map((item) => item.url).toList(),
+            ),
             child: const Text('保存全部', style: TextStyle(fontSize: 14)),
           ),
         if (item.isLivePhoto)
@@ -209,13 +232,11 @@ class ImageGridView extends StatelessWidget {
         builder: (BuildContext context, ImageGridInfo info) {
           final width = info.size.width;
           final height = info.size.height;
-          late final placeHolder = Container(
+          final placeHolder = Container(
             width: width,
             height: height,
             decoration: BoxDecoration(
-              color: ColorScheme.of(
-                context,
-              ).onInverseSurface.withValues(alpha: 0.4),
+              color: ColorScheme.of(context).onInverseSurface.withValues(alpha: 0.4),
             ),
             child: Image.asset(
               Assets.loading,
@@ -225,13 +246,8 @@ class ImageGridView extends StatelessWidget {
             ),
           );
           return List.generate(picArr.length, (index) {
-            void onTap() => _onTap(context, index);
             final item = picArr[index];
-            final borderRadius = _borderRadius(
-              info.column,
-              picArr.length,
-              index,
-            );
+            final borderRadius = _borderRadius(info.column, picArr.length, index);
             Widget child = Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -254,13 +270,12 @@ class ImageGridView extends StatelessWidget {
             if (!item.isLongPic) {
               child = Hero(tag: '${item.url}$hashCode', child: child);
             }
-            child = Semantics(
+            return Semantics(
               label: '图片，第 ${index + 1} 张，共 ${picArr.length} 张',
               button: true,
-              onTap: onTap,
-              child: child,
+              onTap: () => _onTap(context, index),
+              child: LayoutId(id: index, child: child),
             );
-            return LayoutId(id: index, child: child);
           });
         },
       ),

@@ -258,6 +258,15 @@ class OpusContent extends StatelessWidget {
                         ),
                       )
                       .toList(),
+                  allPicArr: images
+                      .map(
+                        (e) => ImageModel(
+                          width: e.width,
+                          height: e.height,
+                          url: e.url,
+                        ),
+                      )
+                      .toList(),
                 );
               }
             case 3 when (element.line?.pic != null):

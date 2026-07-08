@@ -98,6 +98,16 @@ Widget content(
                     height: item.height,
                     url: item.url ?? '',
                     liveUrl: item.liveUrl,
+                    ),
+                  )
+                  .toList(),
+            allPicArr: pics
+                .map(
+                  (item) => ImageModel(
+                    width: item.width,
+                    height: item.height,
+                    url: item.url ?? '',
+                    liveUrl: item.liveUrl,
                   ),
                 )
                 .toList(),

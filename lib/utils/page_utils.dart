@@ -45,6 +45,7 @@ abstract final class PageUtils {
   static Future<void> imageView({
     int initialPage = 0,
     required List<SourceModel> imgList,
+    List<SourceModel>? allSources,
     int? quality,
     ValueChanged<int>? onPageChanged,
     String tag = '',
@@ -53,6 +54,7 @@ abstract final class PageUtils {
       HeroDialogRoute(
         pageBuilder: (context, animation, secondaryAnimation) => GalleryViewer(
           sources: imgList,
+          allSources: allSources,
           initIndex: initialPage,
           quality: quality ?? GlobalData().imgQuality,
           onPageChanged: onPageChanged,
@@ -412,14 +414,18 @@ abstract final class PageUtils {
   static void onHorizontalPreviewState(
     ScaffoldState state,
     List<SourceModel> imgList,
-    int index,
-  ) {
+    int index, {
+    List<SourceModel>? allSources,
+    String tag = '',
+  }) {
     state.showBottomSheet(
       constraints: const BoxConstraints(),
       (context) => GalleryViewer(
         sources: imgList,
+        allSources: allSources,
         initIndex: index,
         quality: GlobalData().imgQuality,
+        tag: tag,
       ),
       enableDrag: false,
       elevation: 0.0,

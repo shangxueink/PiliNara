@@ -274,6 +274,17 @@ TextSpan? richNode(
                             ),
                           )
                           .toList(),
+                      allPicArr: i.dynPic?.isNotEmpty == true
+                          ? i.dynPic!
+                              .map(
+                                (item) => ImageModel(
+                                  url: item.src ?? '',
+                                  width: item.width,
+                                  height: item.height,
+                                ),
+                              )
+                              .toList()
+                          : null,
                     ),
                   ),
                 );
