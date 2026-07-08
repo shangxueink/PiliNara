@@ -14,6 +14,9 @@ mixin ReplyVoteMixin on CommonListController<MainListReply, ReplyInfo> {
         voteCard = res.voteCard;
       }
     }
-    return super.customHandleResponse(isRefresh, response);
+    return super.customHandleResponse(
+      isRefresh,
+      response as Success<MainListReply>,
+    );
   }
 }
