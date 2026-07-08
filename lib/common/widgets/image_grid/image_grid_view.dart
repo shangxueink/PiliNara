@@ -276,12 +276,13 @@ class ImageGridView extends StatelessWidget {
             if (!item.isLongPic) {
               child = Hero(tag: '${item.url}$hashCode', child: child);
             }
-            return Semantics(
+            child = Semantics(
               label: '图片，第 ${index + 1} 张，共 ${picArr.length} 张',
               button: true,
               onTap: () => _onTap(context, index),
-              child: LayoutId(id: index, child: child),
+              child: child,
             );
+            return LayoutId(id: index, child: child);
           });
         },
       ),
