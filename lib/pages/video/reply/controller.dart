@@ -22,6 +22,7 @@ class VideoReplyController extends ReplyController<MainListReply>
   int aid;
   final VideoType videoType;
   late final isPugv = videoType == VideoType.pugv;
+  bool isEnteringPip = false;
   final String heroTag;
   late final videoCtr = Get.find<VideoDetailController>(tag: heroTag);
 

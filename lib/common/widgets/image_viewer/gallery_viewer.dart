@@ -513,7 +513,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   ImageUtils.onShareImg(item.url);
                 },
                 dense: true,
-                title: const Text('鍒嗕韩', style: TextStyle(fontSize: 14)),
+                title: const Text('分享', style: TextStyle(fontSize: 14)),
               ),
             ListTile(
               onTap: () {
@@ -521,7 +521,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 Utils.copyText(item.url);
               },
               dense: true,
-              title: const Text('澶嶅埗閾炬帴', style: TextStyle(fontSize: 14)),
+              title: const Text('复制链接', style: TextStyle(fontSize: 14)),
             ),
             ListTile(
               onTap: () {
@@ -529,7 +529,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 ImageUtils.downloadImg([item.url]);
               },
               dense: true,
-              title: const Text('淇濆瓨鍥剧墖', style: TextStyle(fontSize: 14)),
+              title: const Text('保存图片', style: TextStyle(fontSize: 14)),
             ),
             if (canViewAllMedia)
               ListTile(
@@ -538,7 +538,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   _viewAllMedia();
                 },
                 dense: true,
-                title: const Text('鏌ョ湅鎵€鏈夊浘鐗?, style: TextStyle(fontSize: 14)),
+                title: const Text('查看所有图片', style: TextStyle(fontSize: 14)),
               ),
             if (PlatformUtils.isDesktop)
               ListTile(
@@ -547,7 +547,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                   PageUtils.launchURL(item.url);
                 },
                 dense: true,
-                title: const Text('缃戦〉鎵撳紑', style: TextStyle(fontSize: 14)),
+                title: const Text('网页打开', style: TextStyle(fontSize: 14)),
               ),
             if (item.sourceType == SourceType.livePhoto)
               ListTile(
@@ -562,7 +562,7 @@ class _GalleryViewerState extends State<GalleryViewer>
                 },
                 dense: true,
                 title: Text(
-                  '淇濆瓨${Platform.isIOS ? ' Live Photo' : '瑙嗛'}',
+                  '保存${Platform.isIOS ? ' Live Photo' : '视频'}',
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
@@ -583,23 +583,23 @@ class _GalleryViewerState extends State<GalleryViewer>
         PopupMenuItem(
           height: 42,
           onTap: () => Utils.copyText(item.url),
-          child: const Text('澶嶅埗閾炬帴', style: TextStyle(fontSize: 14)),
+          child: const Text('复制链接', style: TextStyle(fontSize: 14)),
         ),
         PopupMenuItem(
           height: 42,
           onTap: () => ImageUtils.downloadImg([item.url]),
-          child: const Text('淇濆瓨鍥剧墖', style: TextStyle(fontSize: 14)),
+          child: const Text('保存图片', style: TextStyle(fontSize: 14)),
         ),
         if (canViewAllMedia)
           PopupMenuItem(
             height: 42,
             onTap: _viewAllMedia,
-            child: const Text('鏌ョ湅鎵€鏈夊浘鐗?, style: TextStyle(fontSize: 14)),
+            child: const Text('查看所有图片', style: TextStyle(fontSize: 14)),
           ),
         PopupMenuItem(
           height: 42,
           onTap: () => PageUtils.launchURL(item.url),
-          child: const Text('缃戦〉鎵撳紑', style: TextStyle(fontSize: 14)),
+          child: const Text('网页打开', style: TextStyle(fontSize: 14)),
         ),
         if (item.sourceType == SourceType.livePhoto)
           PopupMenuItem(
@@ -610,7 +610,7 @@ class _GalleryViewerState extends State<GalleryViewer>
               width: item.width!,
               height: item.height!,
             ),
-            child: const Text('淇濆瓨瑙嗛', style: TextStyle(fontSize: 14)),
+            child: const Text('保存视频', style: TextStyle(fontSize: 14)),
           ),
       ],
     );
