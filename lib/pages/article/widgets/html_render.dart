@@ -51,9 +51,11 @@ Widget htmlRender({
             );
           }
           final width = isEmote ? 22.0 : maxWidth;
+          final allSources = imgList?.map((url) => SourceModel(url: url)).toList();
           return GestureDetector(
             onTap: () => PageUtils.imageView(
               imgList: [SourceModel(url: imgUrl)],
+              allSources: allSources,
               quality: 60,
             ),
             child: fromHero(

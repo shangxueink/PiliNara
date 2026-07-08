@@ -27,7 +27,6 @@ import 'package:PiliPlus/common/widgets/image_viewer/viewer.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart';
 import 'package:PiliPlus/main.dart' show tmpPadding;
 import 'package:PiliPlus/models/common/image_preview_type.dart';
-import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/utils/device_utils.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
@@ -41,7 +40,8 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart' hide Image, PageView;
-import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter/services.dart'
+    show HapticFeedback, SystemChrome, SystemUiOverlay;
 import 'package:get/get.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -96,6 +96,7 @@ class _GalleryViewerState extends State<GalleryViewer>
   double dx = 0, dy = 0;
   Offset _offset = Offset.zero;
   bool _dragging = false;
+  late final bool _hideSystemBar;
 
   String _getActualUrl(String url) {
     return _quality != 100 ? ImageUtils.thumbnailUrl(url, _quality) : url.http2https;
@@ -157,21 +158,16 @@ class _GalleryViewerState extends State<GalleryViewer>
     );
   }
 
-  late final bool _hideSystemBar;
-
   void _initHideSystemBar() {
     if (Platform.isAndroid) {
-      if (showSystemBar_) {
-        final size = DeviceUtils.size;
-        _hideSystemBar = !MaxScreenSize.isWindowMode(
-          width: size.width,
-          height: size.height,
-        );
-      } else {
-        _hideSystemBar = false;
-      }
+      final size = DeviceUtils.size;
+      _hideSystemBar = Pref.imageViewerHideSystemBar &&
+          !MaxScreenSize.isWindowMode(
+            width: size.width,
+            height: size.height,
+          );
     } else if (Platform.isIOS) {
-      _hideSystemBar = showSystemBar_;
+      _hideSystemBar = Pref.imageViewerHideSystemBar;
     } else {
       _hideSystemBar = false;
     }
@@ -186,7 +182,7 @@ class _GalleryViewerState extends State<GalleryViewer>
       _initHideSystemBar();
       if (_hideSystemBar) {
         tmpPadding = padding;
-        hideSystemBar()!.whenComplete(
+        SystemChrome.setEnabledSystemUIMode(.immersiveSticky).whenComplete(
           () => WidgetsBinding.instance.addPostFrameCallback((_) => tmpPadding = null),
         );
       }
@@ -267,7 +263,12 @@ class _GalleryViewerState extends State<GalleryViewer>
     }
     Future.delayed(const Duration(milliseconds: 200), _currIndex.close);
     super.dispose();
-    if (_hideSystemBar) showSystemBar();
+    if (_hideSystemBar) {
+      SystemChrome.setEnabledSystemUIMode(
+        Platform.isAndroid && DeviceUtils.sdkInt < 29 ? .manual : .edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+    }
   }
 
   void _onPointerDown(PointerDownEvent event) {

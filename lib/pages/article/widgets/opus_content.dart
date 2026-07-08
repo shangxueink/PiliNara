@@ -242,6 +242,7 @@ class OpusContent extends StatelessWidget {
                 return GestureDetector(
                   onTap: () => PageUtils.imageView(
                     imgList: images,
+                    allSources: images,
                     initialPage: images.indexWhere((e) => e.url == pic.url),
                     quality: 60,
                   ),

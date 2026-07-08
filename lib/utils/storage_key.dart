@@ -175,6 +175,7 @@ abstract final class SettingBoxKey {
       downloadPath = 'downloadPath',
       followOrderType = 'followOrderType',
       enableImgMenu = 'enableImgMenu',
+      imageViewerHideSystemBar = 'imageViewerHideSystemBar',
       showDynDispute = 'showDynDispute',
       touchSlopH = 'touchSlopH',
       floatingNavBar = 'floatingNavBar',

@@ -196,6 +196,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                 child: htmlRender(
                   context: context,
                   html: controller.articleData!.content!,
+                  imgList: controller.articleData!.originImageUrls,
                   maxWidth: maxWidth,
                 ),
               );
@@ -206,6 +207,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                   return htmlRender(
                     context: context,
                     element: res.body!.children[index],
+                    imgList: controller.articleData!.originImageUrls,
                     maxWidth: maxWidth,
                   );
                 },
@@ -281,6 +283,9 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                                   onTap: () => PageUtils.imageView(
                                     quality: 60,
                                     imgList: pics
+                                        .map((e) => SourceModel(url: e.url!))
+                                        .toList(),
+                                    allSources: pics
                                         .map((e) => SourceModel(url: e.url!))
                                         .toList(),
                                     initialPage: index,

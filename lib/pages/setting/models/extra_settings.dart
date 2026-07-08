@@ -473,6 +473,12 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     onChanged: (value) => ImageGridView.enableImgMenu = value,
   ),
+  const SwitchModel(
+    title: '图片浏览器隐藏系统导航栏',
+    leading: Icon(Icons.navigation_outlined),
+    setKey: SettingBoxKey.imageViewerHideSystemBar,
+    defaultVal: true,
+  ),
   SwitchModel(
     setKey: SettingBoxKey.feedBackEnable,
     onChanged: (value) {
