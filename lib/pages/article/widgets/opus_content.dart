@@ -248,6 +248,7 @@ class OpusContent extends StatelessWidget {
                   child: child,
                 );
               } else {
+                final images = this.images();
                 return ImageGridView(
                   picArr: element.pic!.pics!
                       .map(
